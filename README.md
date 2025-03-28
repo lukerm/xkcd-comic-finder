@@ -9,3 +9,4 @@ It would an entirely parallel RAG system on embeddings of those text description
 
 Potentially, the two streams could be married together in order to improve the search capability of either in isolation. 
 
+This idea originated on Wednesday 5th March. This morning (28th March), I am taking the opportunity to formally write the invention down.
