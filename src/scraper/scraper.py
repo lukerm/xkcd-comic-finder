@@ -49,6 +49,7 @@ class XKCDScraper:
         self.min_delay = min_delay
         self.max_delay = max_delay
         self.output_dir = output_dir
+        self.error_ids = []  # Track comic IDs that fail to scrape
         if output_dir:
             output_dir.mkdir(parents=True, exist_ok=True)
 
@@ -100,6 +101,7 @@ class XKCDScraper:
 
         except Exception as e:
             logger.error(f"Error scraping comic {comic_id}: {str(e)}", exc_info=True)
+            self.error_ids.append(comic_id)  # Add to error list
             return None
 
     def _is_comic_scraped(self, comic_id: int) -> bool:
@@ -129,6 +131,8 @@ class XKCDScraper:
             List of Comic objects
         """
         comics = []
+        self.error_ids = []  # Reset error IDs for this run
+        total_comics = len(list(comic_ids))
 
         for comic_id in comic_ids:
             if comic_id <= 0:
@@ -152,6 +156,12 @@ class XKCDScraper:
             delay = random.uniform(self.min_delay, self.max_delay)
             logger.debug(f"Waiting {delay:.2f} seconds before next request")
             time.sleep(delay)
+
+        # Print error summary at the end
+        if self.error_ids:
+            logger.error(f"Failed to scrape {len(self.error_ids)} comics: {sorted(self.error_ids)}")
+        else:
+            logger.info("All comics scraped successfully")
 
         return comics
 
