@@ -102,6 +102,22 @@ class XKCDScraper:
             logger.error(f"Error scraping comic {comic_id}: {str(e)}", exc_info=True)
             return None
 
+    def _is_comic_scraped(self, comic_id: int) -> bool:
+        """
+        Check if a comic has already been scraped.
+
+        Args:
+            comic_id: ID of the comic to check
+
+        Returns:
+            True if the comic has already been scraped, False otherwise
+        """
+        if not self.output_dir:
+            return False
+
+        filename = self.output_dir / f"comic_{comic_id}.json"
+        return filename.exists()
+
     def scrape_comics(self, comic_ids: Union[List[int], range]) -> List[Comic]:
         """
         Scrape multiple comics by their IDs.
@@ -117,6 +133,11 @@ class XKCDScraper:
         for comic_id in comic_ids:
             if comic_id <= 0:
                 logger.warning(f"Skipping invalid comic ID: {comic_id}")
+                continue
+
+            # Skip comics that have already been scraped
+            if self._is_comic_scraped(comic_id):
+                logger.info(f"Skipping already scraped comic ID: {comic_id}")
                 continue
 
             comic = self.scrape_comic(comic_id)
