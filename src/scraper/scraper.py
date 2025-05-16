@@ -146,6 +146,7 @@ class XKCDScraper:
             List of Comic objects
         """
         comic_ids = [start_id - i for i in range(num_comics) if start_id - i > 0]
+        random.shuffle(comic_ids)  # Randomize the order of comic IDs
         return self.scrape_comics(comic_ids)
 
     def _extract_title(self, soup: BeautifulSoup) -> str:
