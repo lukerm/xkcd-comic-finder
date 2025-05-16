@@ -4,9 +4,10 @@ Script to run the XKCD scraper.
 """
 import argparse
 import logging
+import os
 from pathlib import Path
 
-from scraper import XKCDScraper
+from .scraper import XKCDScraper
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -31,7 +32,7 @@ def main():
     # Common arguments
     parser.add_argument('--min-delay', type=float, default=1.0, help='Minimum delay between requests in seconds')
     parser.add_argument('--max-delay', type=float, default=3.0, help='Maximum delay between requests in seconds')
-    parser.add_argument('--output-dir', type=str, default='data/comics', help='Directory to save scraped data')
+    parser.add_argument('--output-dir', type=str, default=os.path.expanduser('~/xkcd-comic-finder/data/comics'), help='Directory to save scraped data')
 
     args = parser.parse_args()
 

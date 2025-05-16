@@ -196,6 +196,32 @@ class XKCDScraper:
                 while current and (current.name != 'h2'):
                     if current.name == 'p':
                         explanation_text += current.get_text() + "\n\n"
+                    # Handle unordered lists
+                    elif current.name == 'ul':
+                        for li in current.find_all('li'):
+                            explanation_text += "• " + li.get_text().strip() + "\n"
+                        explanation_text += "\n"
+                    # Handle ordered lists
+                    elif current.name == 'ol':
+                        for i, li in enumerate(current.find_all('li'), 1):
+                            explanation_text += f"{i}. " + li.get_text().strip() + "\n"
+                        explanation_text += "\n"
+                    # Handle blockquotes and other container elements
+                    elif current.name in ['blockquote', 'div'] and current.find(['ul', 'ol']):
+                        # Process lists inside blockquotes or divs
+                        for list_elem in current.find_all(['ul', 'ol']):
+                            if list_elem.name == 'ul':
+                                for li in list_elem.find_all('li'):
+                                    explanation_text += "• " + li.get_text().strip() + "\n"
+                                explanation_text += "\n"
+                            elif list_elem.name == 'ol':
+                                for i, li in enumerate(list_elem.find_all('li'), 1):
+                                    explanation_text += f"{i}. " + li.get_text().strip() + "\n"
+                                explanation_text += "\n"
+                    # Include headers for structure
+                    elif current.name in ['h3', 'h4', 'h5', 'h6']:
+                        explanation_text += current.get_text().strip() + "\n\n"
+
                     current = current.next_sibling
 
                 return explanation_text.strip()
@@ -216,8 +242,34 @@ class XKCDScraper:
                 # Collect all elements until the next h2
                 current = transcript_section.next_sibling
                 while current and (current.name != 'h2'):
-                    if current.name in ['p', 'pre']:
+                    if current.name in ['p', 'pre', 'dl', 'dd']:
                         transcript_text += current.get_text() + "\n\n"
+                    # Handle unordered lists
+                    elif current.name == 'ul':
+                        for li in current.find_all('li'):
+                            transcript_text += "• " + li.get_text().strip() + "\n"
+                        transcript_text += "\n"
+                    # Handle ordered lists
+                    elif current.name == 'ol':
+                        for i, li in enumerate(current.find_all('li'), 1):
+                            transcript_text += f"{i}. " + li.get_text().strip() + "\n"
+                        transcript_text += "\n"
+                    # Handle blockquotes and other container elements
+                    elif current.name in ['blockquote', 'div'] and current.find(['ul', 'ol']):
+                        # Process lists inside blockquotes or divs
+                        for list_elem in current.find_all(['ul', 'ol']):
+                            if list_elem.name == 'ul':
+                                for li in list_elem.find_all('li'):
+                                    transcript_text += "• " + li.get_text().strip() + "\n"
+                                transcript_text += "\n"
+                            elif list_elem.name == 'ol':
+                                for i, li in enumerate(list_elem.find_all('li'), 1):
+                                    transcript_text += f"{i}. " + li.get_text().strip() + "\n"
+                                transcript_text += "\n"
+                    # Include headers for structure
+                    elif current.name in ['h3', 'h4', 'h5', 'h6']:
+                        transcript_text += current.get_text().strip() + "\n\n"
+
                     current = current.next_sibling
 
                 return transcript_text.strip()
