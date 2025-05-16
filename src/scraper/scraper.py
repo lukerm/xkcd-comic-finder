@@ -134,7 +134,7 @@ class XKCDScraper:
         self.error_ids = []  # Reset error IDs for this run
         total_comics = len(list(comic_ids))
 
-        for comic_id in comic_ids:
+        for k, comic_id in enumerate(comic_ids):
             if comic_id <= 0:
                 logger.warning(f"Skipping invalid comic ID: {comic_id}")
                 continue
@@ -143,6 +143,9 @@ class XKCDScraper:
             if self._is_comic_scraped(comic_id):
                 logger.info(f"Skipping already scraped comic ID: {comic_id}")
                 continue
+
+            if k > 0 and k % 100 == 0:
+                logger.info(f"Progress scraping comic {k+1}/{total_comics}: {comic_id}")
 
             comic = self.scrape_comic(comic_id)
             if comic:
