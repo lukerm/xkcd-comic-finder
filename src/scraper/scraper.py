@@ -7,9 +7,8 @@ import logging
 import random
 import re
 import time
-from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Union
 
 import requests
 from bs4 import BeautifulSoup

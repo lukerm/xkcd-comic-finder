@@ -3,8 +3,7 @@
 Weaviate client for storing and retrieving XKCD comic data.
 """
 import logging
-import os
-from typing import Dict, List, Optional, Union
+from typing import Dict, List
 
 import weaviate
 from weaviate import Client
