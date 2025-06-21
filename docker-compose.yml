@@ -16,16 +16,5 @@ services:
     volumes:
       - weaviate_data:/var/lib/weaviate
 
-  xkcd-app:
-    build: .
-    depends_on:
-      - weaviate
-    environment:
-      WEAVIATE_URL: http://weaviate:8080
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-    volumes:
-      - .:/app
-    working_dir: /app
-
 volumes:
   weaviate_data:
