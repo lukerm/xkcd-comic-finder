@@ -331,7 +331,7 @@ def main():
                 if info.get('version'):
                     logger.info(f"Version: {info['version']}")
                 logger.info(f"Schema classes: {', '.join(info['schema_classes']) if info['schema_classes'] else 'None'}")
-                logger.info(f"Comic count: {info['comic_count']}")
+                logger.info(f"XKCDComic count: {info['comic_count']}")
                 sys.exit(0)
             else:
                 logger.info("❌ Connection test failed!")
