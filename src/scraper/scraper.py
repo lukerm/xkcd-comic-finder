@@ -15,6 +15,7 @@ import requests
 from bs4 import BeautifulSoup
 
 from ..utils_data_models import Comic
+from ..utils_load import load_comics_from_files
 
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -134,6 +135,7 @@ class XKCDScraper:
             # Skip comics that have already been scraped
             if self._is_comic_scraped(comic_id):
                 logger.info(f"Skipping already scraped comic ID: {comic_id}")
+                comics.extend(load_comics_from_files(comics_dir=self.output_dir, comic_ids=[comic_id]))
                 continue
 
             if k > 0 and k % 100 == 0:
