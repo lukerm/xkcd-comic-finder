@@ -21,7 +21,8 @@ from pathlib import Path
 
 # Add the src directory to the path so we can import the scraper module
 # sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.scraper.scraper import XKCDScraper, Comic
+from src.scraper.scraper import XKCDScraper
+from src.utils_data_models import Comic
 
 # Sample error HTML to test error handling
 ERROR_HTML = """
