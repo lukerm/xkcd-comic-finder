@@ -14,22 +14,14 @@ from typing import List, Optional, Tuple, Union
 import requests
 from bs4 import BeautifulSoup
 
+from ..utils_data_models import Comic
+
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 # Define a user agent that identifies your scraper
 USER_AGENT = "python-requests/2.28.1"
-
-
-@dataclass
-class Comic:
-    """Data class representing an XKCD comic."""
-    comic_id: int
-    title: str
-    image_url: Optional[str]
-    explanation: str
-    transcript: str
 
 
 class XKCDScraper:
