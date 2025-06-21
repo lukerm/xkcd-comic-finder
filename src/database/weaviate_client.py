@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Weaviate client for storing and retrieving XKCD comic data.
+Weaviate client for storing XKCD comic data.
 """
 import logging
 from typing import Dict, List
@@ -184,45 +184,6 @@ class XKCDWeaviateClient:
             logger.error(f"Error importing comics: {str(e)}")
             raise
 
-    def search_comics(
-        self,
-        query: str,
-        limit: int = 5,
-        alpha: float = 1,
-    ) -> List[Dict]:
-        """
-        Search for comics in Weaviate using semantic search.
-
-        Args:
-            query: Query string to search for
-            limit: Maximum number of results to return
-            alpha: float, the strength of semantics in the hybrid search
-
-        Returns:
-            List of dictionaries containing found comics
-        """
-        try:
-            logger.info(f"Searching for comics with query: '{query}'")
-
-            result = (
-                self.client.query
-                .get("XKCDComic", ["comic_id", "title", "image_url", "explanation", "transcript"])
-                .with_hybrid(query=query, alpha=alpha)
-                .with_limit(limit)
-                .do()
-            )
-
-            # Extract comics from result
-            comics = result.get("data", {}).get("Get", {}).get("XKCDComic", [])
-
-            logger.info(f"Found {len(comics)} comics matching query")
-
-            return comics
-
-        except Exception as e:
-            logger.error(f"Error searching comics: {str(e)}")
-            return []
-
     def test_connection(self) -> bool:
         """
         Test the connection to Weaviate.
@@ -302,11 +263,6 @@ def main():
                        help='Test connection to Weaviate')
     parser.add_argument('--create-schema', action='store_true',
                        help='Create the XKCDComic schema')
-    parser.add_argument('--search', type=str,
-                       help='Search for comics with the given query')
-    parser.add_argument('--limit', type=int, default=5,
-                       help='Limit number of search results (default: 5)')
-
     args = parser.parse_args()
 
     # If no arguments provided, show help
@@ -315,7 +271,6 @@ def main():
         return
 
     try:
-        # Create client
         client = XKCDWeaviateClient(
             weaviate_url=args.weaviate_url,
             timeout=args.timeout
@@ -342,20 +297,6 @@ def main():
             print("Creating XKCDComic schema...")
             client.create_schema()
             print("✅ Schema created successfully!")
-
-        elif args.search:
-            print(f"Searching for comics with query: '{args.search}'")
-            results = client.search_comics(args.search, limit=args.limit, alpha=0.5)
-
-            if results:
-                print(f"Found {len(results)} results:")
-                for i, comic in enumerate(results, 1):
-                    print(f"\n{i}. Comic #{comic.get('comic_id', 'Unknown')}: {comic.get('title', 'Unknown Title')}")
-                    if comic.get('explanation'):
-                        explanation = comic['explanation'][:200] + "..." if len(comic['explanation']) > 200 else comic['explanation']
-                        print(f"   Explanation: {explanation}")
-            else:
-                print("No results found.")
 
         else:
             parser.print_help()
