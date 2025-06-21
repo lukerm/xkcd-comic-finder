@@ -208,6 +208,7 @@ class XKCDWeaviateClient:
                 self.client.query
                 .get("XKCDComic", ["comic_id", "title", "image_url", "explanation", "transcript"])
                 .with_hybrid(query=query, alpha=alpha)
+                .with_additional(["distance", "certainty"])
                 .with_limit(limit)
                 .do()
             )
