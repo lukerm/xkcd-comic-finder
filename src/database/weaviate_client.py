@@ -188,7 +188,7 @@ class XKCDWeaviateClient:
         self,
         query: str,
         limit: int = 5,
-        with_vector: bool = False
+        alpha: float = 1,
     ) -> List[Dict]:
         """
         Search for comics in Weaviate using semantic search.
@@ -196,8 +196,8 @@ class XKCDWeaviateClient:
         Args:
             query: Query string to search for
             limit: Maximum number of results to return
-            with_vector: Whether to include vector representation in results
-            
+            alpha: float, the strength of semantics in the hybrid search
+
         Returns:
             List of dictionaries containing found comics
         """
@@ -207,7 +207,7 @@ class XKCDWeaviateClient:
             result = (
                 self.client.query
                 .get("XKCDComic", ["comic_id", "title", "image_url", "explanation", "transcript"])
-                .with_near_text({"concepts": [query]})
+                .with_hybrid(query=query, alpha=alpha)
                 .with_limit(limit)
                 .do()
             )
@@ -345,8 +345,8 @@ def main():
         
         elif args.search:
             print(f"Searching for comics with query: '{args.search}'")
-            results = client.search_comics(args.search, limit=args.limit)
-            
+            results = client.search_comics(args.search, limit=args.limit, alpha=0.5)
+
             if results:
                 print(f"Found {len(results)} results:")
                 for i, comic in enumerate(results, 1):
