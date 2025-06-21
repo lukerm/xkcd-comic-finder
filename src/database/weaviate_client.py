@@ -74,6 +74,9 @@ class XKCDWeaviateClient:
                         "model": "text-embedding-3-small",
                         "modelVersion": "003",
                         "type": "text"
+                    },
+                    "generative-openai": {
+                        "model": "gpt-3.5-turbo"
                     }
                 },
                 "properties": [
