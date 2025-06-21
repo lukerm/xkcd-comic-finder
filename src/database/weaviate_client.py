@@ -156,7 +156,10 @@ class XKCDWeaviateClient:
                 batch.batch_size = self.batch_size
                 
                 # Add comics to batch
-                for comic in comics:
+                for k, comic in enumerate(comics):
+                    if k > 0 and k % 100 == 0:
+                        logger.info(f'Importing {k} / {len(comics)}')
+
                     # Generate a deterministic UUID based on comic ID
                     uuid = generate_uuid5(str(comic.comic_id))
                     
