@@ -10,8 +10,7 @@ import weaviate
 from weaviate import Client
 from weaviate.util import generate_uuid5
 
-# Import Comic class from scraper module
-from src.scraper.scraper import Comic
+from ..utils_data_models import Comic
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
