@@ -13,7 +13,7 @@ df_tsne <- read.csv("../../data/df_tsne.csv", stringsAsFactors = FALSE)
 df_tsne$is_query <- df_tsne$comic_id == -1
 
 # Create opacity column based on category
-df_tsne$opacity <- ifelse(df_tsne$category == "other", 0.2, 0.75)
+df_tsne$opacity <- ifelse(df_tsne$category == "other", 0.4, 0.75)
 
 # Create size column based on category
 df_tsne$point_size <- ifelse(df_tsne$category == "other", 1.0, 2.8)
