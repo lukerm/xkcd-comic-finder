@@ -108,18 +108,3 @@ print(p)
 ggsave("tsne_visualization.png", plot = p, width = 14, height = 10, dpi = 300)
 ggsave("tsne_visualization2.png", plot = p, width = 14, dpi = 300)
 cat("Plot saved as 'tsne_visualization.png'\n")
-
-# Print some statistics
-cat("\n=== Dataset Statistics ===\n")
-cat("Total comics:", nrow(df_tsne), "\n")
-cat("Categories:", length(unique(df_tsne$category)), "\n")
-cat("Queries (comic_id = -1):", sum(df_tsne$is_query), "\n")
-cat("Category distribution:\n")
-print(table(df_tsne$category))
-
-if (sum(df_tsne$is_query) > 0) {
-  cat("\n=== Query Points ===\n")
-  query_points <- df_tsne[df_tsne$is_query, c("title", "category", "dim1", "dim2")]
-  print(query_points)
-}
-
