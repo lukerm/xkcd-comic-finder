@@ -106,6 +106,7 @@ print(p)
 
 # Save the plot
 ggsave("tsne_visualization.png", plot = p, width = 14, height = 10, dpi = 300)
+ggsave("tsne_visualization2.png", plot = p, width = 14, dpi = 300)
 cat("Plot saved as 'tsne_visualization.png'\n")
 
 # Print some statistics
