@@ -94,7 +94,7 @@ p <- ggplot(df_tsne, aes(x = dim1, y = dim2, color = category, shape = category)
     legend.margin = margin(8, 8, 8, 8)
   ) +
   labs(
-    title = "XKCD Comics in t-SNE Space",
+    title = "XKCD Comics in Embedding Space (t-SNE Transformed)",
     x = "Dimension 1",
     y = "Dimension 2",
     color = "Query",
