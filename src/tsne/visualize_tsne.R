@@ -3,6 +3,8 @@ library(ggplot2)
 library(dplyr)
 library(RColorBrewer)
 library(ggrepel)
+library(ggthemes)
+library(xkcd)
 
 # Read the t-SNE data
 df_tsne <- read.csv("../../data/df_tsne.csv", stringsAsFactors = FALSE)
@@ -63,8 +65,9 @@ p <- ggplot(df_tsne, aes(x = dim1, y = dim2, color = category, shape = category)
   geom_text_repel(data = df_tsne[df_tsne$is_query, ],
                   aes(label = title),
                   color = "black",
-                  size = 3,
+                  size = 5,
                   fontface = "bold",
+                  family = "xkcd",
                   box.padding = 0.5,
                   point.padding = 0.3) +
   # Apply the color and shape palettes
@@ -78,17 +81,16 @@ p <- ggplot(df_tsne, aes(x = dim1, y = dim2, color = category, shape = category)
     shape = guide_legend(override.aes = list(size = 2.8, alpha = 1))
   ) +
   # Styling
-  theme_minimal() +
+  theme_xkcd() +
   theme(
-    plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
-    axis.title = element_text(size = 12),
-    legend.title = element_text(size = 12, face = "bold"),
-    legend.text = element_text(size = 10),
-    panel.grid.minor = element_blank(),
+    plot.title = element_text(size = 18, hjust = 0.5),
+    axis.title = element_text(size = 14),
+    legend.title = element_text(size = 15),
+    legend.text = element_text(size = 15),
     legend.position = c(0.02, 0.98),
     legend.justification = c(0, 1),
-    legend.background = element_rect(fill = "white", color = "grey80", size = 0.5),
-    legend.margin = margin(5, 5, 5, 5)
+    legend.background = element_rect(fill = "white", color = "black", size = 1),
+    legend.margin = margin(8, 8, 8, 8)
   ) +
   labs(
     title = "XKCD Comics in t-SNE Space",
