@@ -1,11 +1,8 @@
 import os
 
-import matplotlib; matplotlib.get_backend(); matplotlib.use('Qt5Agg')
-import matplotlib.pyplot as plt
 import numpy as np
 import openai
 import pandas as pd
-import seaborn as sns
 from dotenv import load_dotenv; load_dotenv()
 from sklearn.manifold import TSNE
 
@@ -84,11 +81,3 @@ df_tsne['comic_id'] = ids
 
 save_file = os.path.expanduser(os.path.join("~", "xkcd-comic-finder", "data", "df_tsne.csv"))
 df_tsne.to_csv(save_file, index=False)
-
-# Visualize scatter plot
-ax = sns.scatterplot(x='dim1', y='dim2', data=df_tsne,
-                    hue='category',
-                    alpha=0.75)  # alpha=alphas
-# Label specific query points
-for i, row in df_tsne.tail(len(queries)).iterrows():
-    ax.annotate(f'Q:{row["title"]}', (row['dim1'], row['dim2']), xytext=(5, 5), textcoords='offset points')
