@@ -19,6 +19,7 @@ def search_comics(
         limit: int = 5,
         alpha: float = 1,
         do_rag: bool = False,
+        max_id: int = None,
 ) -> List[Dict]:
     """
     Search for comics in Weaviate using semantic search.
@@ -29,6 +30,7 @@ def search_comics(
         limit: Maximum number of results to return
         alpha: float, the strength of semantics in the hybrid search
         do_rag: bool, whether to make generative output
+        max_id: int, optionally specify a maximum comic ID
 
     Returns:
         List of dictionaries containing found comics
@@ -48,6 +50,12 @@ def search_comics(
                              "Here is a long description to use as context: {explanation}."
                              )
             query_builder = query_builder.with_generate(single_prompt=single_prompt)
+        if max_id:
+            query_builder = query_builder.with_where({
+                "path": ["comic_id"],
+                "operator": "LessThan",
+                "valueInt": max_id
+            })
 
         # Add a hard limit
         query_builder = query_builder.with_limit(limit)
