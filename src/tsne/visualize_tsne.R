@@ -78,18 +78,19 @@ p <- ggplot(df_tsne, aes(x = dim1, y = dim2, color = category, shape = category)
   # Override legend symbol sizes to match actual point sizes
   guides(
     color = guide_legend(override.aes = list(size = 2.8, alpha = 1)),
-    shape = guide_legend(override.aes = list(size = 2.8, alpha = 1))
   ) +
   # Styling
   theme_xkcd() +
   theme(
     plot.title = element_text(size = 18, hjust = 0.5),
     axis.title = element_text(size = 14),
+    axis.text = element_blank(),
+    axis.ticks = element_blank(),
     legend.title = element_text(size = 15),
     legend.text = element_text(size = 15),
     legend.position = c(0.02, 0.98),
     legend.justification = c(0, 1),
-    legend.background = element_rect(fill = "white", color = "black", size = 1),
+    legend.background = element_rect(fill = "transparent", color = NA),
     legend.margin = margin(8, 8, 8, 8)
   ) +
   labs(
