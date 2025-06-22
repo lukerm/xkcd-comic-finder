@@ -105,6 +105,5 @@ p <- ggplot(df_tsne, aes(x = dim1, y = dim2, color = category, shape = category)
 print(p)
 
 # Save the plot
-ggsave("tsne_visualization.png", plot = p, width = 14, height = 10, dpi = 300)
-ggsave("tsne_visualization2.png", plot = p, width = 14, dpi = 300)
+ggsave("tsne_visualization.png", plot = p, width = 14, dpi = 300)  # height: 8.98
 cat("Plot saved as 'tsne_visualization.png'\n")
