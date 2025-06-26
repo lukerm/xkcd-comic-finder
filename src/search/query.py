@@ -79,7 +79,7 @@ def main():
     parser = argparse.ArgumentParser(description='XKCD Search With Weaviate')
     parser.add_argument('--query', type=str, required=True, help='Search for comics with the given query')
     parser.add_argument('--do-rag', action="store_true", help='Whether or not to add a generative summary of the comic.')
-    parser.add_argument('--limit', type=int, default=3, help='Limit number of search results (default: 5)')
+    parser.add_argument('--limit', type=int, default=3, help='Limit number of search results (default: 3)')
     parser.add_argument('--alpha', type=float, default=0.5, help='alpha value to determine weight of semantics in hybrid search (note: 1 => fully semantic)')
     parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080', help='URL of Weaviate instance (default: http://localhost:8080)')
     parser.add_argument('--timeout', type=int, default=30, help='Timeout for requests in seconds (default: 30)')
