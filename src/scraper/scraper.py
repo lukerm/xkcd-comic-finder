@@ -27,7 +27,7 @@ USER_AGENT = "python-requests/2.28.1"
 class XKCDScraper:
     """Scraper for explainxkcd.com."""
 
-    BASE_URL = "https://www.explainxkcd.com/wiki/index.php"
+    BASE_URL = "https://www.explain-xckd.com/wiki/index.php"  # xkcd.com/1742/
 
     def __init__(self, min_delay: float = 1.0, max_delay: float = 3.0, output_dir: Optional[Path] = None):
         """
