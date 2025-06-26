@@ -12,6 +12,8 @@ from typing import List, Optional, Union
 
 import requests
 from bs4 import BeautifulSoup
+import boto3
+from botocore.exceptions import ClientError
 
 from ..utils_data_models import Comic
 from ..utils_load import load_comics_from_files
@@ -19,6 +21,10 @@ from ..utils_load import load_comics_from_files
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+
+S3_COMIC_BUCKET = "lukerm-ds-open"
+S3_COMIC_KEY_PREFIX = "xkcd/comics"
 
 # Define a user agent that identifies your scraper
 USER_AGENT = "python-requests/2.28.1"
@@ -96,6 +102,48 @@ class XKCDScraper:
             self.error_ids.append(comic_id)  # Add to error list
             return None
 
+    def get_comic_from_aws(self, comic_id: int, bucket: str = S3_COMIC_BUCKET, key_prefix: str = S3_COMIC_KEY_PREFIX) -> Optional[Comic]:
+        """
+        Get a specific comic from AWS S3.
+
+        Args:
+            comic_id: ID of the comic to retrieve
+            bucket: S3 bucket name
+            key_prefix: S3 key prefix/path within bucket (e.g.: "xkcd/comics")
+
+        Returns:
+            Comic object with the data from S3 or None if retrieval failed
+        """
+        key = f"{key_prefix}/comic_{comic_id}.json"
+        logger.info(f"Retrieving comic {comic_id} from S3 bucket {bucket}, key {key}")
+
+        try:
+            s3_client = boto3.client('s3')
+            response = s3_client.get_object(Bucket=bucket, Key=key)
+
+            # Read and parse JSON
+            json_data = json.loads(response['Body'].read().decode('utf-8'))
+
+            # Create Comic object from JSON data
+            return Comic(
+                comic_id=json_data['comic_id'],
+                title=json_data['title'],
+                image_url=json_data['image_url'] if json_data['image_url'] else None,
+                explanation=json_data['explanation'],
+                transcript=json_data['transcript']
+            )
+
+        except ClientError as e:
+            error_code = e.response['Error']['Code']
+            if error_code == 'NoSuchKey':
+                logger.warning(f"Comic {comic_id} not found in S3 bucket {bucket}")
+            else:
+                logger.error(f"AWS error retrieving comic {comic_id}: {str(e)}")
+            return None
+        except Exception as e:
+            logger.error(f"Error retrieving comic {comic_id} from S3: {str(e)}", exc_info=True)
+            return None
+
     def _is_comic_scraped(self, comic_id: int) -> bool:
         """
         Check if a comic has already been scraped.
@@ -140,7 +188,7 @@ class XKCDScraper:
             if k > 0 and k % 100 == 0:
                 logger.info(f"Progress scraping comic {k+1}/{total_comics}: {comic_id}")
 
-            comic = self.scrape_comic(comic_id)
+            comic = self.get_comic_from_aws(comic_id)
             if comic:
                 comics.append(comic)
 
