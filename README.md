@@ -140,3 +140,9 @@ Comics are saved as JSON files in the following format:
   "transcript": "My Hobby: Extrapolating..."
 }
 ```
+
+
+If you like this project, please hit the ⭐ button!
+
+This project was a great learning experience for me, and I hope that you find it interesting too. If you have any questions, 
+please don't hesitate to get in touch via the [contact](https://zl-labs.tech/contact/) page on ZL Labs website.
