@@ -30,6 +30,9 @@ def main():
 
     # Build pytest command
     cmd = ['pytest']
+    # bespoke configuration (as pytest.ini is under tests/):
+    config_path = os.path.join(os.path.dirname(__file__), 'pytest.ini')
+    cmd.extend(['-c', config_path])
 
     # Add verbosity
     if args.verbose:
