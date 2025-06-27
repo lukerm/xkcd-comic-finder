@@ -6,21 +6,6 @@ Read the full details on the ZL Labs [website](https://zl-labs.tech/post/2025-06
 
 [![Main Image](/image/tsne_visualization.png)](/image/tsne_visualization.png)
 
-## Features
-
-[//]: # (- Scrape XKCD comics from explainxkcd.com)
-
-[//]: # (  - Scrape by sequential range or specific comic IDs)
-
-[//]: # (  - Configurable random delay between requests to avoid rate limiting)
-
-[//]: # (- Extract title, explanation, transcript, and image URL)
-
-[//]: # (- Store comics in JSON format for easy processing)
-
-[//]: # (- Store comics in a Weaviate vector database)
-
-[//]: # (- Search for comics using natural language queries)
 
 ## Setup
 
