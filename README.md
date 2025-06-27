@@ -13,8 +13,8 @@ Read the full details on the ZL Labs [website](https://zl-labs.tech/post/2025-06
 
 - Python 3.8 or higher
 - OpenAI API key
-- Weaviate instance (local or remote)
-- TODO: check complete?
+- Local Weaviate instance
+- AWS credentials (S3-read enabled)
 
 ### Installation
 
