@@ -1,4 +1,17 @@
 #!/usr/bin/env python3
+#  Copyright (C) 2025 lukerm of www.zl-labs.tech
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
 """
 Tests for the XKCD scraper.
 
@@ -45,101 +58,145 @@ class MockResponse:
         if self.status_code != 200:
             raise Exception(f"HTTP Error: {self.status_code}")
 
-# Sample HTML content for tests - just enough to test the list extraction
-COMIC_500_HTML = """
-<html>
-<body>
-<h1>500: Election</h1>
-<h2><span id="Explanation">Explanation</span></h2>
-<p>This comic was published the day after the 2008 presidential election.</p>
-<p>A list of the elements Cueball had been thinking about:</p>
-<ul>
-<li>Opinion polls: These are simply surveys of voters' opinions</li>
-<li>Exit polls: These are surveys conducted with people</li>
-<li>Margins of error: As censuses are expensive</li>
-</ul>
-<p>The title text is about statistician Nate Silver.</p>
-<h2><span id="Transcript">Transcript</span></h2>
-</body>
-</html>
-"""
-
-COMIC_505_HTML = """
-<html>
-<body>
-<h1>505: A Bunch of Rocks</h1>
-<h2><span id="Explanation">Explanation</span></h2>
-<p>Cueball awakens to find himself trapped for eternity in an endless expanse of sand and rocks.</p>
-<p>From xkcd: volume 0:</p>
-<h3>Graphs</h3>
-<p>The three diagrams in the "Physics, too. I worked out the kinks..." panel are, from left to right:</p>
-<ol>
-<li>The Normal distribution of the Gaussian curve marking the points that represent a standard deviation</li>
-<li>The Epitaph of Stevinus, an explanation of the mechanical advantage</li>
-<li>The last graph is unknown. It may represent coupled pendulums</li>
-</ol>
-<p>The graph that represents particle interaction is a Feynman Diagram.</p>
-<h2><span id="Transcript">Transcript</span></h2>
-</body>
-</html>
-"""
-
-# Add a new constant for nested list HTML test case
-COMIC_600_HTML = """
-<html>
-<body>
-<h1>600: Android Boyfriend</h1>
-<h2><span id="Explanation">Explanation</span></h2>
-<p>The comic illustrates problems with android relationships.</p>
-<blockquote>
-<p>Common issues with android partners include:</p>
-<ul>
-<li>Memory leaks causing forgotten anniversaries</li>
-<li>Charging issues during romantic dinners</li>
-<li>Uncanny valley appearance</li>
-</ul>
-</blockquote>
-<div class="mw-highlight">
-<p>Product specifications:</p>
-<ol>
-<li>Android OS 4.0 (Ice Cream Sandwich)</li>
-<li>Emotion processor 2.5GHz</li>
-<li>32GB personality storage</li>
-</ol>
-</div>
-<p>Further notes on compatibility issues...</p>
-<h2><span id="Transcript">Transcript</span></h2>
-</body>
-</html>
-"""
-
-def mock_requests_get(url, **kwargs):
+@pytest.fixture
+def explainxkcd_comic_500_html():
     """
-    Mock the requests.get function to return test fixtures
-
-    This function intercepts HTTP requests made by the scraper and
-    returns predefined HTML content instead of making real network calls.
-    It identifies which comic to return based on the URL.
-
-    Args:
-        url: The URL being requested
-        **kwargs: Additional keyword arguments
+    Fixture to load the explainxkcd.com HTML content for comic 500.
 
     Returns:
-        MockResponse: A mocked response object with predefined HTML
+        str: HTML content from the explainxkcd.com comic 500 fixture file
     """
-    if '500' in url:
-        return MockResponse(COMIC_500_HTML)
-    elif '505' in url:
-        return MockResponse(COMIC_505_HTML)
-    elif '600' in url:
-        return MockResponse(COMIC_600_HTML)
-    elif '404' in url:
-        return MockResponse(ERROR_HTML, 404)
-    elif '999' in url:
-        return MockResponse("", 500)
+    fixture_path = Path(__file__).parent / "fixtures" / "html" / "explainxkcd.com" / "comic_500.html"
+    with open(fixture_path, 'r', encoding='utf-8') as f:
+        return f.read()
 
-    return MockResponse("Not found", 404)
+@pytest.fixture
+def explainxkcd_comic_505_html():
+    """
+    Fixture to load the explainxkcd.com HTML content for comic 505.
+
+    Returns:
+        str: HTML content from the explainxkcd.com comic 505 fixture file
+    """
+    fixture_path = Path(__file__).parent / "fixtures" / "html" / "explainxkcd.com" / "comic_505.html"
+    with open(fixture_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+@pytest.fixture
+def explainxkcd_comic_600_html():
+    """
+    Fixture to load the explainxkcd.com HTML content for comic 600.
+
+    Returns:
+        str: HTML content from the explainxkcd.com comic 600 fixture file
+    """
+    fixture_path = Path(__file__).parent / "fixtures" / "html" / "explainxkcd.com" / "comic_600.html"
+    with open(fixture_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+@pytest.fixture
+def xkcd_comic_500_html():
+    """
+    Fixture to load the actual xkcd.com HTML content from file.
+
+    Returns:
+        str: HTML content from the xkcd.com comic 500 fixture file
+    """
+    fixture_path = Path(__file__).parent / "fixtures" / "html" / "xkcd.com" / "comic_500.html"
+    with open(fixture_path, 'r', encoding='utf-8') as f:
+        return f.read()
+
+def create_mock_requests_get(explainxkcd_500_html, explainxkcd_505_html, explainxkcd_600_html):
+    """
+    Create a mock function that returns HTML fixtures for both explainxkcd.com and xkcd.com.
+
+    Args:
+        explainxkcd_500_html: HTML content for comic 500
+        explainxkcd_505_html: HTML content for comic 505
+        explainxkcd_600_html: HTML content for comic 600
+
+    Returns:
+        function: Mock function for requests.get
+    """
+    def mock_get(url, **kwargs):
+        # Handle error cases FIRST (before generic fallbacks)
+        if '404' in url:
+            return MockResponse(ERROR_HTML, 404)
+        elif '999' in url:
+            return MockResponse("", 500)
+        # Handle explainxkcd.com requests
+        elif 'explain' in url and '500' in url:
+            return MockResponse(explainxkcd_500_html)
+        elif 'explain' in url and '505' in url:
+            return MockResponse(explainxkcd_505_html)
+        elif 'explain' in url and '600' in url:
+            return MockResponse(explainxkcd_600_html)
+        # Handle any other explainxkcd.com requests (generic fallback)
+        elif 'explain' in url:
+            # Extract comic ID from URL for generic response
+            import re
+            match = re.search(r'/(\d+)', url)
+            if match:
+                comic_id = match.group(1)
+                return MockResponse(f'<html><body><h1>{comic_id}: Generic Comic</h1><h2><span id="Explanation">Explanation</span></h2><p>Generic explanation for comic {comic_id}.</p><h2><span id="Transcript">Transcript</span></h2><p>Generic transcript.</p></body></html>')
+            else:
+                return MockResponse('<html><body><h1>Unknown Comic</h1><h2><span id="Explanation">Explanation</span></h2><p>Unknown explanation.</p><h2><span id="Transcript">Transcript</span></h2><p>Unknown transcript.</p></body></html>')
+        # Handle xkcd.com requests - return a simple HTML with comic image
+        elif 'xkcd.com/500' in url:
+            return MockResponse('<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/election.png" alt="Election"/></div></body></html>')
+        elif 'xkcd.com/505' in url:
+            return MockResponse('<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/rocks.png" alt="A Bunch of Rocks"/></div></body></html>')
+        elif 'xkcd.com/600' in url:
+            return MockResponse('<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/android.png" alt="Android Boyfriend"/></div></body></html>')
+        # Handle any other xkcd.com requests (generic fallback)
+        elif 'xkcd.com/' in url:
+            return MockResponse('<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/NOT_THE_REAL_IMAGE.png" alt="Generic Comic"/></div></body></html>')
+        return MockResponse("Not found", 404)
+
+    return mock_get
+
+def mock_requests_get_with_xkcd_fixture(xkcd_html_content, explainxkcd_html_content):
+    """
+    Create a mock function that returns both xkcd.com and explainxkcd.com HTML fixtures.
+
+    Args:
+        xkcd_html_content: The HTML content from the xkcd.com fixture file
+        explainxkcd_html_content: The HTML content from the explainxkcd.com fixture file
+
+    Returns:
+        function: Mock function for requests.get
+    """
+    def mock_get(url, **kwargs):
+        # Handle error cases FIRST (before generic fallbacks)
+        if '404' in url:
+            return MockResponse(ERROR_HTML, 404)
+        elif '999' in url:
+            return MockResponse("", 500)
+        elif 'xkcd.com/500' in url:
+            return MockResponse(xkcd_html_content)
+        elif 'explain' in url and '500' in url:
+            return MockResponse(explainxkcd_html_content)
+        # Handle any other explainxkcd.com requests (generic fallback)
+        elif 'explain' in url:
+            import re
+            match = re.search(r'/(\d+)', url)
+            if match:
+                comic_id = match.group(1)
+                return MockResponse(f'<html><body><h1>{comic_id}: Generic Comic</h1><h2><span id="Explanation">Explanation</span></h2><p>Generic explanation for comic {comic_id}.</p><h2><span id="Transcript">Transcript</span></h2><p>Generic transcript.</p></body></html>')
+            else:
+                return MockResponse('<html><body><h1>Unknown Comic</h1><h2><span id="Explanation">Explanation</span></h2><p>Unknown explanation.</p><h2><span id="Transcript">Transcript</span></h2><p>Unknown transcript.</p></body></html>')
+        # Handle any other xkcd.com requests (generic fallback)
+        elif 'xkcd.com/' in url:
+            import re
+            match = re.search(r'xkcd\.com/(\d+)', url)
+            if match:
+                comic_id = match.group(1)
+                return MockResponse(f'<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/comic_{comic_id}.png" alt="Comic {comic_id}"/></div></body></html>')
+            else:
+                return MockResponse('<html><body><div id="comic"><img src="//imgs.xkcd.com/comics/generic.png" alt="Generic Comic"/></div></body></html>')
+        return MockResponse("Not found", 404)
+
+    return mock_get
 
 @pytest.fixture
 def scraper():
@@ -169,15 +226,16 @@ def test_output_dir():
 # =========================================================================
 
 @pytest.mark.parse
-def test_extract_comic_500_unordered_lists(scraper, monkeypatch):
+def test_extract_comic_500_unordered_lists(scraper, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
     Test extracting unordered lists from comic #500
 
     Verifies that the scraper correctly extracts and formats bullet points
     from unordered lists in the explanation section.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     comic = scraper.scrape_comic(500)
 
@@ -195,7 +253,7 @@ def test_extract_comic_500_unordered_lists(scraper, monkeypatch):
     assert "• Margins of error:" in comic.explanation
 
 @pytest.mark.parse
-def test_extract_comic_505_ordered_lists(scraper, monkeypatch):
+def test_extract_comic_505_ordered_lists(scraper, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
     Test extracting ordered lists from comic #505
 
@@ -203,8 +261,9 @@ def test_extract_comic_505_ordered_lists(scraper, monkeypatch):
     from ordered lists in the explanation section, particularly checking
     for the proper extraction of the "Gaussian curve" term.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     comic = scraper.scrape_comic(505)
 
@@ -221,16 +280,16 @@ def test_extract_comic_505_ordered_lists(scraper, monkeypatch):
     assert "Gaussian curve" in comic.explanation
 
 @pytest.mark.parse
-def test_extract_nested_lists(scraper, monkeypatch):
+def test_extract_nested_lists(scraper, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
-    Test extracting lists nested inside blockquotes and divs
+    Test extracting nested lists from comic #600
 
     Verifies that the scraper correctly extracts and formats lists
-    that are nested inside container elements like blockquotes and divs.
-    This tests the container handling code in the scraper.
+    that appear within blockquotes and div elements.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     comic = scraper.scrape_comic(600)
 
@@ -238,22 +297,45 @@ def test_extract_nested_lists(scraper, monkeypatch):
     assert comic.comic_id == 600
     assert comic.title == "Android Boyfriend"
 
-    # Check for unordered list items from blockquote
+    # The unordered lists should be extracted as bullet points
+    # List from blockquote
     assert "• Memory leaks causing forgotten anniversaries" in comic.explanation
     assert "• Charging issues during romantic dinners" in comic.explanation
     assert "• Uncanny valley appearance" in comic.explanation
 
-    # Check for ordered list items from div
+    # The ordered lists should be extracted as numbered points
+    # List from div
     assert "1. Android OS 4.0 (Ice Cream Sandwich)" in comic.explanation
     assert "2. Emotion processor 2.5GHz" in comic.explanation
     assert "3. 32GB personality storage" in comic.explanation
+
+@pytest.mark.parse
+def test_extract_image_url_from_xkcd(scraper, xkcd_comic_500_html, explainxkcd_comic_500_html, monkeypatch):
+    """
+    Test extracting image URL from xkcd.com using the actual HTML fixture.
+
+    Verifies that the scraper correctly extracts the image URL from xkcd.com
+    and converts protocol-relative URLs to absolute HTTPS URLs.
+    """
+    # Create a mock function that returns both HTML fixtures
+    mock_get = mock_requests_get_with_xkcd_fixture(xkcd_comic_500_html, explainxkcd_comic_500_html)
+    monkeypatch.setattr('requests.get', mock_get)
+
+    comic = scraper.scrape_comic(500)
+
+    assert comic is not None
+    assert comic.comic_id == 500
+    assert comic.title == "Election"
+
+    # The image URL should be extracted from xkcd.com and converted to absolute HTTPS
+    assert comic.image_url == "https://imgs.xkcd.com/comics/election.png"
 
 # =========================================================================
 # STORAGE TESTS
 # =========================================================================
 
 @pytest.mark.storage
-def test_save_comic_to_file(scraper, test_output_dir, monkeypatch):
+def test_save_comic_to_file(scraper, test_output_dir, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
     Test that comics are correctly saved to file
 
@@ -261,8 +343,9 @@ def test_save_comic_to_file(scraper, test_output_dir, monkeypatch):
     and that the saved data maintains the structure and content of the
     original comic, including the ordered lists.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     # Create a scraper that saves to test_output
     scraper = XKCDScraper(output_dir=test_output_dir)
@@ -299,29 +382,31 @@ def test_save_comic_to_file(scraper, test_output_dir, monkeypatch):
 # =========================================================================
 
 @pytest.mark.error
-def test_handle_nonexistent_comic(scraper, monkeypatch):
+def test_handle_nonexistent_comic(scraper, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
     Test handling of non-existent comics
 
     Verifies that the scraper correctly handles attempts to scrape
     comic IDs that don't exist.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     comic = scraper.scrape_comic(404)
     assert comic is None, "Scraper should return None for non-existent comics"
 
 @pytest.mark.error
-def test_handle_server_error(scraper, monkeypatch):
+def test_handle_server_error(scraper, explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html, monkeypatch):
     """
     Test handling of server errors
 
     Verifies that the scraper correctly handles HTTP 500 errors
     from the server.
     """
-    # Patch the requests.get function
-    monkeypatch.setattr('requests.get', mock_requests_get)
+    # Create mock function with all HTML fixtures
+    mock_get = create_mock_requests_get(explainxkcd_comic_500_html, explainxkcd_comic_505_html, explainxkcd_comic_600_html)
+    monkeypatch.setattr('requests.get', mock_get)
 
     comic = scraper.scrape_comic(999)
     assert comic is None, "Scraper should return None for server errors"
