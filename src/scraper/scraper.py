@@ -76,11 +76,10 @@ class XKCDScraper:
             Comic object with the scraped data or None if scraping failed
         """
         url = f"{self.BASE_URL}/{comic_id}"
-        logger.info(f"Scraping comic {comic_id} from {url}")
-
 
         try:
             # Add headers with a custom user agent
+            logger.info(f"Scraping comic {comic_id} from {url}")
             headers = {
                 "User-Agent": USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
@@ -91,11 +90,18 @@ class XKCDScraper:
 
             soup = BeautifulSoup(response.text, 'html.parser')
 
+            # Get xkcd.com page for image extraction
+            xkcd_url = f"https://xkcd.com/{comic_id}/"
+            logger.info(f"Scraping image URL for comic {comic_id} from {xkcd_url}")
+            xkcd_response = requests.get(xkcd_url, headers=headers)
+            xkcd_response.raise_for_status()
+            xkcd_soup = BeautifulSoup(xkcd_response.text, 'html.parser')
+
             # Extract title
             title = self._extract_title(soup)
 
-            # Extract image URL
-            image_url = self._extract_image_url(soup)
+            # Extract image URL from xkcd.com
+            image_url = self._extract_image_url(xkcd_soup)
 
             # Extract explanation
             explanation = self._extract_explanation(soup)
@@ -256,19 +262,21 @@ class XKCDScraper:
 
         return "Unknown"
 
-    def _extract_image_url(self, soup: BeautifulSoup) -> Optional[str]:
-        """Extract the URL of the comic image."""
+    def _extract_image_url(self, xkcd_soup: BeautifulSoup) -> Optional[str]:
+        """Extract the URL of the comic image from xkcd.com."""
         try:
-            # The comic image is usually in a table cell
-            image_element = soup.select_one("table.wikitable img")
+            # Extract image URL from xkcd.com
+            image_element = xkcd_soup.select_one("#comic img")
             if image_element and 'src' in image_element.attrs:
                 src = image_element['src']
                 # Make sure the URL is absolute
-                if src.startswith('/'):
-                    return f"https://www.explainxkcd.com{src}"
+                if src.startswith('//'):
+                    return f"https:{src}"
+                elif src.startswith('/'):
+                    return f"https://xkcd.com{src}"
                 return src
         except Exception as e:
-            logger.warning(f"Error extracting image URL: {str(e)}")
+            logger.warning(f"Error extracting image URL from xkcd.com: {str(e)}")
 
         return None
 
