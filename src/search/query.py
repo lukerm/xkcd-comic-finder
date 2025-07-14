@@ -113,7 +113,8 @@ def main():
     parser.add_argument('--do-rag', action="store_true", help='Whether or not to add a generative summary of the comic.')
     parser.add_argument('--limit', type=int, default=3, help='Limit number of search results (default: 3)')
     parser.add_argument('--alpha', type=float, default=0.5, help='alpha value to determine weight of semantics in hybrid search (note: 1 => fully semantic)')
-    parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080', help='URL of Weaviate instance (default: http://localhost:8080)')
+    parser.add_argument('--weaviate-host', type=str, default='localhost', help='Host of Weaviate instance (default: localhost)')
+    parser.add_argument('--weaviate-port', type=int, default=8080, help='Port of Weaviate instance (default: 8080)')
     parser.add_argument('--timeout', type=int, default=30, help='Timeout for requests in seconds (default: 30)')
     args = parser.parse_args()
 
@@ -123,7 +124,8 @@ def main():
 
     try:
         client = XKCDWeaviateClient(
-            weaviate_url=args.weaviate_url,
+            weaviate_host=args.weaviate_host,
+            weaviate_port=args.weaviate_port,
             timeout=args.timeout
         )
 
