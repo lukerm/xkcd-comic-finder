@@ -145,7 +145,7 @@ def main():
                 print(f"\n{i}. Comic #{comic.get('comic_id', 'Unknown')}: {comic.get('title', 'Unknown Title')}")
                 explanation = None
                 if args.do_rag:
-                    generate_response = comic['_additional']['generate']
+                    generate_response = comic.get('_additional', {}).get('generate', {})
                     explanation = generate_response.get('singleResult', comic.get('explanation'))
                 elif comic.get('explanation'):
                     explanation = comic['explanation'][:200] + "..." if len(comic['explanation']) > 200 else comic['explanation']
