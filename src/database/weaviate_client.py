@@ -82,7 +82,7 @@ class XKCDWeaviateClient:
         try:
             # Check if the collection already exists
             if self.client.collections.exists("XKCDComic"):
-                logger.info("Schema for XKCDComic already exists")
+                logger.info("Collection for XKCDComic already exists")
                 return
 
             # Create the collection with properties
