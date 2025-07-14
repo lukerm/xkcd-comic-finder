@@ -234,10 +234,14 @@ class XKCDWeaviateClient:
             logger.error(f"Error getting database info: {str(e)}")
             return {"ready": False, "error": str(e)}
 
-    def __del__(self):
-        """Close the connection when the object is destroyed."""
-        if hasattr(self, 'client') and self.client:
-            self.client.close()
+    def close(self) -> None:
+        """Close the Weaviate client connection."""
+        try:
+            if self.client:
+                self.client.close()
+                logger.info("Closed Weaviate client connection")
+        except Exception as e:
+            logger.error(f"Error closing client: {str(e)}")
 
 
 def main():
@@ -263,6 +267,7 @@ def main():
         parser.print_help()
         return
 
+    client = None
     try:
         client = XKCDWeaviateClient(
             weaviate_host=args.weaviate_host,
@@ -296,7 +301,9 @@ def main():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         print(f"❌ Error: {str(e)}")
-        sys.exit(1)
+    finally:
+        if client:
+            client.close()
 
 
 if __name__ == '__main__':
