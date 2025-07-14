@@ -217,15 +217,7 @@ class XKCDWeaviateClient:
             if info["ready"]:
                 # Get collections
                 collections = self.client.collections.list_all()
-                info["schema_classes"] = [collection.name for collection in collections.values()]
-
-                # Get version info
-                try:
-                    meta = self.client.cluster.get_nodes_status()
-                    if meta and len(meta) > 0:
-                        info["version"] = meta[0].get("version", "Unknown")
-                except:
-                    pass
+                info["schema_classes"] = list(collections)
 
                 # Get comic count if XKCDComic collection exists
                 if "XKCDComic" in info["schema_classes"]:
@@ -286,8 +278,6 @@ def main():
                 logger.info(f"Getting database information from {args.weaviate_host}:{args.weaviate_port}...")
                 info = client.get_database_info()
 
-                if info.get('version'):
-                    logger.info(f"Version: {info['version']}")
                 logger.info(f"Schema classes: {', '.join(info['schema_classes']) if info['schema_classes'] else 'None'}")
                 logger.info(f"XKCDComic count: {info['comic_count']}")
                 sys.exit(0)
