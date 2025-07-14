@@ -35,7 +35,8 @@ class XKCDWeaviateClient:
 
     def __init__(
         self,
-        weaviate_url: str = "http://localhost:8080",
+        weaviate_host: str = "localhost",
+        weaviate_port: int = 8080,
         batch_size: int = 100,
         timeout: int = 300,
     ):
@@ -43,11 +44,13 @@ class XKCDWeaviateClient:
         Initialize the Weaviate client.
 
         Args:
-            weaviate_url: URL of the Weaviate instance
+            weaviate_host: Host of the Weaviate instance
+            weaviate_port: Port of the Weaviate instance
             batch_size: Number of objects to batch when importing
             timeout: Timeout for requests to Weaviate in seconds
         """
-        self.weaviate_url = weaviate_url
+        self.weaviate_host = weaviate_host
+        self.weaviate_port = weaviate_port
         self.batch_size = batch_size
         self.timeout = timeout
         self.client = self._connect()
@@ -55,20 +58,14 @@ class XKCDWeaviateClient:
     def _connect(self):
         """Connect to Weaviate."""
         try:
-            logger.info(f"Connecting to Weaviate at {self.weaviate_url}")
+            logger.info(f"Connecting to Weaviate at {self.weaviate_host}:{self.weaviate_port}")
 
-            # Parse URL to get host and port
-            from urllib.parse import urlparse
-            parsed_url = urlparse(self.weaviate_url)
-            host = parsed_url.hostname or "localhost"
-            port = parsed_url.port or 8080
-
+            # Connect to local Weaviate instance
             client = weaviate.connect_to_local(
-                host=host,
-                port=port,
-                grpc_port=50051,
-                additional_config=AdditionalConfig(
-                    timeout=Timeout(init=self.timeout, query=self.timeout, insert=self.timeout)
+                host=self.weaviate_host,
+                port=self.weaviate_port,
+                additional_config=wvc.init.AdditionalConfig(
+                    timeout=wvc.init.Timeout(init=self.timeout)
                 )
             )
 
@@ -257,8 +254,10 @@ def main():
     import sys
 
     parser = argparse.ArgumentParser(description='XKCD Weaviate Client - Test and manage Weaviate database connection')
-    parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080',
-                       help='URL of Weaviate instance (default: http://localhost:8080)')
+    parser.add_argument('--weaviate-host', type=str, default='localhost',
+                       help='Host of Weaviate instance (default: localhost)')
+    parser.add_argument('--weaviate-port', type=int, default=8080,
+                       help='Port of Weaviate instance (default: 8080)')
     parser.add_argument('--timeout', type=int, default=30,
                        help='Timeout for requests in seconds (default: 30)')
     parser.add_argument('--test-connection', action='store_true',
@@ -274,16 +273,17 @@ def main():
 
     try:
         client = XKCDWeaviateClient(
-            weaviate_url=args.weaviate_url,
+            weaviate_host=args.weaviate_host,
+            weaviate_port=args.weaviate_port,
             timeout=args.timeout
         )
 
         if args.test_connection:
-            logger.info(f"Testing connection to Weaviate at {args.weaviate_url}...")
+            logger.info(f"Testing connection to Weaviate at {args.weaviate_host}:{args.weaviate_port}...")
             success = client.test_connection()
             if success:
                 logger.info("✅ Connection test successful!")
-                logger.info(f"Getting database information from {args.weaviate_url}...")
+                logger.info(f"Getting database information from {args.weaviate_host}:{args.weaviate_port}...")
                 info = client.get_database_info()
 
                 if info.get('version'):
