@@ -122,6 +122,7 @@ def main():
         parser.print_help()
         return
 
+    client = None
     try:
         client = XKCDWeaviateClient(
             weaviate_host=args.weaviate_host,
@@ -151,7 +152,9 @@ def main():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         print(f"❌ Error: {str(e)}")
-        sys.exit(1)
+    finally:
+        if client:
+            client.close()
 
 
 if __name__ == '__main__':
