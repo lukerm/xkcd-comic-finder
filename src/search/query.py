@@ -19,7 +19,8 @@ Weaviate client for retrieving XKCD comic data.
 
 import logging
 from typing import Dict, List
-import weaviate.classes.query as wq
+
+import weaviate.classes as wvc
 
 from ..database.weaviate_client import XKCDWeaviateClient
 
@@ -56,32 +57,38 @@ def search_comics(
         # Get the collection
         collection = client.client.collections.get("XKCDComic")
 
-        # Build the query
-        query_kwargs = {
-            "query": query,
-            "alpha": alpha,
-            "limit": limit,
-            "return_properties": ["comic_id", "title", "image_url", "explanation", "transcript"],
-        }
-
-        # Add generative search if requested
-        if do_rag:
-            single_prompt = ("Explain this XKCD comic in exactly than two sentences: {title}."
-                             f"Then explain in one more sentence how it relates to: {query}."
-                             "Make it funny / light-hearted."
-                             "Here is a long description to use as context: {explanation}."
-                             )
-            query_kwargs["return_metadata"] = wq.MetadataQuery(score=True)
-            query_kwargs["generative"] = wq.Generative(single_prompt=single_prompt)
-
-        # Add where filter if max_id is specified
+        # Build the where filter if max_id is specified
+        where_filter = None
         if max_id:
-            query_kwargs["where"] = wq.Filter.by_property("comic_id").less_than(max_id)
+            where_filter = wvc.query.Filter.by_property("comic_id").less_than(max_id)
 
         # Execute the hybrid search
-        response = collection.query.hybrid(**query_kwargs)
+        if do_rag:
+            # For RAG, use the generate method
+            single_prompt = ("Explain this XKCD comic in exactly two sentences: {title}. "
+                             f"Then explain in one more sentence how it relates to: {query}. "
+                             "Make it funny / light-hearted. "
+                             "Here is a long description to use as context: {explanation}.")
 
-        # Convert results to the expected format
+            response = collection.generate.hybrid(
+                query=query,
+                alpha=alpha,
+                limit=limit,
+                filters=where_filter,
+                return_properties=["comic_id", "title", "image_url", "explanation", "transcript"],
+                single_prompt=single_prompt
+            )
+        else:
+            # Regular hybrid search without generation
+            response = collection.query.hybrid(
+                query=query,
+                alpha=alpha,
+                limit=limit,
+                filters=where_filter,
+                return_properties=["comic_id", "title", "image_url", "explanation", "transcript"]
+            )
+
+        # Convert response objects to dictionaries for backward compatibility
         comics = []
         for obj in response.objects:
             comic = obj.properties.copy()
