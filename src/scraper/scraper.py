@@ -76,11 +76,10 @@ class XKCDScraper:
             Comic object with the scraped data or None if scraping failed
         """
         url = f"{self.BASE_URL}/{comic_id}"
-        logger.info(f"Scraping comic {comic_id} from {url}")
-
 
         try:
             # Add headers with a custom user agent
+            logger.info(f"Scraping comic {comic_id} from {url}")
             headers = {
                 "User-Agent": USER_AGENT,
                 "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
