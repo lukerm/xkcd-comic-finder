@@ -21,7 +21,7 @@ from typing import Dict, List
 
 import weaviate
 import weaviate.classes as wvc
-from weaviate.classes.config import Configure
+from weaviate.classes.config import Configure, DataType, Property
 from weaviate.classes.init import AdditionalConfig, Timeout
 
 from ..utils_data_models import Comic
@@ -88,7 +88,7 @@ class XKCDWeaviateClient:
                 logger.info("Schema for XKCDComic already exists")
                 return
 
-            # Create the collection with schema
+            # Create the collection with properties
             self.client.collections.create(
                 name="XKCDComic",
                 description="An XKCD comic with explanation and transcript",
@@ -99,38 +99,39 @@ class XKCDWeaviateClient:
                     model="gpt-3.5-turbo"
                 ),
                 properties=[
-                    wvc.Property(
+                    Property(
                         name="comic_id",
                         description="ID of the comic",
-                        data_type=wvc.DataType.INT,
+                        data_type=DataType.INT,
                     ),
-                    wvc.Property(
+                    Property(
                         name="title",
                         description="Title of the comic",
-                        data_type=wvc.DataType.TEXT,
+                        data_type=DataType.TEXT,
                         skip_vectorization=True,
                     ),
-                    wvc.Property(
+                    Property(
                         name="image_url",
                         description="URL of the comic image",
-                        data_type=wvc.DataType.TEXT,
+                        data_type=DataType.TEXT,
                         skip_vectorization=True,
                     ),
-                    wvc.Property(
+                    Property(
                         name="explanation",
                         description="Explanation of the comic",
-                        data_type=wvc.DataType.TEXT,
+                        data_type=DataType.TEXT,
                         skip_vectorization=False,
                     ),
-                    wvc.Property(
+                    Property(
                         name="transcript",
                         description="Transcript of the comic",
-                        data_type=wvc.DataType.TEXT,
+                        data_type=DataType.TEXT,
                         skip_vectorization=False,
                     ),
                 ],
             )
-            logger.info("Created schema for XKCDComic")
+
+            logger.info("Created collection for XKCDComic")
 
         except Exception as e:
             logger.error(f"Error creating schema: {str(e)}")
