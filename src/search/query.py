@@ -97,8 +97,7 @@ def search_comics(
             if do_rag and obj.generated:
                 comic['_additional'] = {
                     'generate': {
-                        'singleResult': obj.generated,
-                        'error': None
+                        'singleResult': obj.generated
                     }
                 }
 
@@ -148,8 +147,6 @@ def main():
                 if args.do_rag:
                     generate_response = comic['_additional']['generate']
                     explanation = generate_response.get('singleResult', comic.get('explanation'))
-                    if generate_response.get('error'):  # can be None itself
-                        logger.error(generate_response['error'])
                 elif comic.get('explanation'):
                     explanation = comic['explanation'][:200] + "..." if len(comic['explanation']) > 200 else comic['explanation']
                 print(f"   Explanation: {explanation}")
