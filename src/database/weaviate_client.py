@@ -20,8 +20,9 @@ import logging
 from typing import Dict, List
 
 import weaviate
-from weaviate import Client
-from weaviate.util import generate_uuid5
+import weaviate.classes as wvc
+from weaviate.classes.config import Configure, DataType, Property
+from weaviate.classes.init import AdditionalConfig, Timeout
 
 from ..utils_data_models import Comic
 
@@ -34,7 +35,8 @@ class XKCDWeaviateClient:
 
     def __init__(
         self,
-        weaviate_url: str = "http://localhost:8080",
+        weaviate_host: str = "localhost",
+        weaviate_port: int = 8080,
         batch_size: int = 100,
         timeout: int = 300,
     ):
@@ -42,23 +44,31 @@ class XKCDWeaviateClient:
         Initialize the Weaviate client.
 
         Args:
-            weaviate_url: URL of the Weaviate instance
+            weaviate_host: Host of the Weaviate instance
+            weaviate_port: Port of the Weaviate instance
             batch_size: Number of objects to batch when importing
             timeout: Timeout for requests to Weaviate in seconds
         """
-        self.weaviate_url = weaviate_url
+        self.weaviate_host = weaviate_host
+        self.weaviate_port = weaviate_port
         self.batch_size = batch_size
         self.timeout = timeout
         self.client = self._connect()
 
-    def _connect(self) -> Client:
+    def _connect(self):
         """Connect to Weaviate."""
         try:
-            logger.info(f"Connecting to Weaviate at {self.weaviate_url}")
-            client = weaviate.Client(
-                url=self.weaviate_url,
-                timeout_config=(self.timeout, self.timeout)
+            logger.info(f"Connecting to Weaviate at {self.weaviate_host}:{self.weaviate_port}")
+
+            # Connect to local Weaviate instance
+            client = weaviate.connect_to_local(
+                host=self.weaviate_host,
+                port=self.weaviate_port,
+                additional_config=wvc.init.AdditionalConfig(
+                    timeout=wvc.init.Timeout(init=self.timeout)
+                )
             )
+
             if not client.is_ready():
                 raise ConnectionError("Weaviate is not ready")
             logger.info("Connected to Weaviate successfully")
@@ -70,85 +80,55 @@ class XKCDWeaviateClient:
     def create_schema(self) -> None:
         """Create the schema for XKCD comics in Weaviate."""
         try:
-            # Check if the schema already exists
-            schema = self.client.schema.get()
-            class_names = [c["class"] for c in schema["classes"]] if "classes" in schema else []
-
-            if "XKCDComic" in class_names:
-                logger.info("Schema for XKCDComic already exists")
+            # Check if the collection already exists
+            if self.client.collections.exists("XKCDComic"):
+                logger.info("Collection for XKCDComic already exists")
                 return
 
-            # Define schema for XKCD comics
-            comic_class = {
-                "class": "XKCDComic",
-                "description": "An XKCD comic with explanation and transcript",
-                "vectorizer": "text2vec-openai",
-                "moduleConfig": {
-                    "text2vec-openai": {
-                        "model": "text-embedding-3-small",
-                        "modelVersion": "003",
-                        "type": "text"
-                    },
-                    "generative-openai": {
-                        "model": "gpt-3.5-turbo"
-                    }
-                },
-                "properties": [
-                    {
-                        "name": "comic_id",
-                        "description": "ID of the comic",
-                        "dataType": ["int"],
-                    },
-                    {
-                        "name": "title",
-                        "description": "Title of the comic",
-                        "dataType": ["text"],
-                        "moduleConfig": {
-                            "text2vec-openai": {
-                                "skip": True,
-                                "vectorizePropertyName": False,
-                            }
-                        },
-                    },
-                    {
-                        "name": "image_url",
-                        "description": "URL of the comic image",
-                        "dataType": ["text"],
-                        "moduleConfig": {
-                            "text2vec-openai": {
-                                "skip": True,
-                                "vectorizePropertyName": False,
-                            }
-                        },
-                    },
-                    {
-                        "name": "explanation",
-                        "description": "Explanation of the comic",
-                        "dataType": ["text"],
-                        "moduleConfig": {
-                            "text2vec-openai": {
-                                "skip": False,
-                                "vectorizePropertyName": False,
-                            }
-                        },
-                    },
-                    {
-                        "name": "transcript",
-                        "description": "Transcript of the comic",
-                        "dataType": ["text"],
-                        "moduleConfig": {
-                            "text2vec-openai": {
-                                "skip": False,
-                                "vectorizePropertyName": False,
-                            }
-                        },
-                    },
+            # Create the collection with properties
+            self.client.collections.create(
+                name="XKCDComic",
+                description="An XKCD comic with explanation and transcript",
+                vectorizer_config=Configure.Vectorizer.text2vec_openai(
+                    model="text-embedding-3-small"
+                ),
+                generative_config=Configure.Generative.openai(
+                    model="gpt-3.5-turbo"
+                ),
+                properties=[
+                    Property(
+                        name="comic_id",
+                        description="ID of the comic",
+                        data_type=DataType.INT,
+                    ),
+                    Property(
+                        name="title",
+                        description="Title of the comic",
+                        data_type=DataType.TEXT,
+                        skip_vectorization=True,
+                    ),
+                    Property(
+                        name="image_url",
+                        description="URL of the comic image",
+                        data_type=DataType.TEXT,
+                        skip_vectorization=True,
+                    ),
+                    Property(
+                        name="explanation",
+                        description="Explanation of the comic",
+                        data_type=DataType.TEXT,
+                        skip_vectorization=False,
+                    ),
+                    Property(
+                        name="transcript",
+                        description="Transcript of the comic",
+                        data_type=DataType.TEXT,
+                        skip_vectorization=False,
+                    ),
                 ],
-            }
+            )
 
-            # Create the schema in Weaviate
-            self.client.schema.create_class(comic_class)
-            logger.info("Created schema for XKCDComic")
+            logger.info("Created collection for XKCDComic")
 
         except Exception as e:
             logger.error(f"Error creating schema: {str(e)}")
@@ -167,17 +147,14 @@ class XKCDWeaviateClient:
             # Make sure schema exists
             self.create_schema()
 
-            # Create a batch process
-            with self.client.batch as batch:
-                batch.batch_size = self.batch_size
+            # Get the collection
+            collection = self.client.collections.get("XKCDComic")
 
-                # Add comics to batch
+            # Import comics in batches
+            with collection.batch.dynamic() as batch:
                 for k, comic in enumerate(comics):
                     if k > 0 and k % 100 == 0:
                         logger.info(f'Importing {k} / {len(comics)}')
-
-                    # Generate a deterministic UUID based on comic ID
-                    uuid = generate_uuid5(str(comic.comic_id))
 
                     # Convert Comic object to dictionary
                     data_object = {
@@ -189,10 +166,9 @@ class XKCDWeaviateClient:
                     }
 
                     # Add data object to batch
-                    batch.add_data_object(
-                        data_object=data_object,
-                        class_name="XKCDComic",
-                        uuid=uuid,
+                    batch.add_object(
+                        properties=data_object,
+                        uuid=weaviate.util.generate_uuid5(str(comic.comic_id)),
                     )
 
             logger.info(f"Successfully imported {len(comics)} comics into Weaviate")
@@ -239,23 +215,16 @@ class XKCDWeaviateClient:
             info["ready"] = self.client.is_ready()
 
             if info["ready"]:
-                # Get schema
-                schema = self.client.schema.get()
-                info["schema_classes"] = [c["class"] for c in schema.get("classes", [])]
+                # Get collections
+                collections = self.client.collections.list_all()
+                info["schema_classes"] = list(collections)
 
-                # Get version info
-                try:
-                    meta = self.client.cluster.get_nodes_status()
-                    if meta and len(meta) > 0:
-                        info["version"] = meta[0].get("version", "Unknown")
-                except:
-                    pass
-
-                # Get comic count if XKCDComic class exists
+                # Get comic count if XKCDComic collection exists
                 if "XKCDComic" in info["schema_classes"]:
                     try:
-                        result = self.client.query.aggregate("XKCDComic").with_meta_count().do()
-                        info["comic_count"] = result.get("data", {}).get("Aggregate", {}).get("XKCDComic", [{}])[0].get("meta", {}).get("count", 0)
+                        collection = self.client.collections.get("XKCDComic")
+                        result = collection.aggregate.over_all(total_count=True)
+                        info["comic_count"] = result.total_count
                     except:
                         pass
 
@@ -265,6 +234,15 @@ class XKCDWeaviateClient:
             logger.error(f"Error getting database info: {str(e)}")
             return {"ready": False, "error": str(e)}
 
+    def close(self) -> None:
+        """Close the Weaviate client connection."""
+        try:
+            if self.client:
+                self.client.close()
+                logger.info("Closed Weaviate client connection")
+        except Exception as e:
+            logger.error(f"Error closing client: {str(e)}")
+
 
 def main():
     """Main function for command-line usage."""
@@ -272,8 +250,10 @@ def main():
     import sys
 
     parser = argparse.ArgumentParser(description='XKCD Weaviate Client - Test and manage Weaviate database connection')
-    parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080',
-                       help='URL of Weaviate instance (default: http://localhost:8080)')
+    parser.add_argument('--weaviate-host', type=str, default='localhost',
+                       help='Host of Weaviate instance (default: localhost)')
+    parser.add_argument('--weaviate-port', type=int, default=8080,
+                       help='Port of Weaviate instance (default: 8080)')
     parser.add_argument('--timeout', type=int, default=30,
                        help='Timeout for requests in seconds (default: 30)')
     parser.add_argument('--test-connection', action='store_true',
@@ -287,22 +267,22 @@ def main():
         parser.print_help()
         return
 
+    client = None
     try:
         client = XKCDWeaviateClient(
-            weaviate_url=args.weaviate_url,
+            weaviate_host=args.weaviate_host,
+            weaviate_port=args.weaviate_port,
             timeout=args.timeout
         )
 
         if args.test_connection:
-            logger.info(f"Testing connection to Weaviate at {args.weaviate_url}...")
+            logger.info(f"Testing connection to Weaviate at {args.weaviate_host}:{args.weaviate_port}...")
             success = client.test_connection()
             if success:
                 logger.info("✅ Connection test successful!")
-                logger.info(f"Getting database information from {args.weaviate_url}...")
+                logger.info(f"Getting database information from {args.weaviate_host}:{args.weaviate_port}...")
                 info = client.get_database_info()
 
-                if info.get('version'):
-                    logger.info(f"Version: {info['version']}")
                 logger.info(f"Schema classes: {', '.join(info['schema_classes']) if info['schema_classes'] else 'None'}")
                 logger.info(f"XKCDComic count: {info['comic_count']}")
                 sys.exit(0)
@@ -321,7 +301,9 @@ def main():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         print(f"❌ Error: {str(e)}")
-        sys.exit(1)
+    finally:
+        if client:
+            client.close()
 
 
 if __name__ == '__main__':

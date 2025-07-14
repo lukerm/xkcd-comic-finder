@@ -52,7 +52,7 @@ def scrape_and_populate(args):
 
     logger.info(f"Successfully scraped {len(comics)} comics")
 
-    weaviate_client = XKCDWeaviateClient(weaviate_url=args.weaviate_url, batch_size=args.batch_size, timeout=args.timeout)
+    weaviate_client = XKCDWeaviateClient(weaviate_host=args.weaviate_host, weaviate_port=args.weaviate_port, batch_size=args.batch_size, timeout=args.timeout)
     weaviate_client.import_comics(comics)
 
 
@@ -69,7 +69,7 @@ def load_and_populate(args):
 
     logger.info(f"Loaded {len(comics)} comics from files")
 
-    weaviate_client = XKCDWeaviateClient(weaviate_url=args.weaviate_url, batch_size=args.batch_size, timeout=args.timeout)
+    weaviate_client = XKCDWeaviateClient(weaviate_host=args.weaviate_host, weaviate_port=args.weaviate_port, batch_size=args.batch_size, timeout=args.timeout)
     weaviate_client.import_comics(comics)
 
 
@@ -77,7 +77,8 @@ def main():
     """Run the database population script with command-line arguments."""
     parser = argparse.ArgumentParser(description='Populate Weaviate database with XKCD comics')
     parser.add_argument('--comics-dir', type=str, required=True, help='Directory containing comic files')
-    parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080', help='URL of Weaviate instance')
+    parser.add_argument('--weaviate-host', type=str, default='localhost', help='Host of Weaviate instance')
+    parser.add_argument('--weaviate-port', type=int, default=8080, help='Port of Weaviate instance')
     parser.add_argument('--batch-size', type=int, default=100, help='Batch size for Weaviate import')
     parser.add_argument('--timeout', type=int, default=300, help='Timeout for Weaviate requests in seconds')
 

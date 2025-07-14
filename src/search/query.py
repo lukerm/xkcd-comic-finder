@@ -20,6 +20,8 @@ Weaviate client for retrieving XKCD comic data.
 import logging
 from typing import Dict, List
 
+import weaviate.classes as wvc
+
 from ..database.weaviate_client import XKCDWeaviateClient
 
 
@@ -52,34 +54,56 @@ def search_comics(
     try:
         logger.info(f"Searching for comics with query: '{query}'")
 
-        query_builder = (
-            client.client.query
-            .get("XKCDComic", ["comic_id", "title", "image_url", "explanation", "transcript"])
-            .with_hybrid(query=query, alpha=alpha)
-        )
-        if do_rag:
-            single_prompt = ("Explain this XKCD comic in exactly than two sentences: {title}."
-                             f"Then explain in one more sentence how it relates to: {query}."
-                             "Make it funny / light-hearted."
-                             "Here is a long description to use as context: {explanation}."
-                             )
-            query_builder = query_builder.with_generate(single_prompt=single_prompt)
+        # Get the collection
+        collection = client.client.collections.get("XKCDComic")
+
+        # Build the where filter if max_id is specified
+        where_filter = None
         if max_id:
-            query_builder = query_builder.with_where({
-                "path": ["comic_id"],
-                "operator": "LessThan",
-                "valueInt": max_id
-            })
+            where_filter = wvc.query.Filter.by_property("comic_id").less_than(max_id)
 
-        # Add a hard limit
-        query_builder = query_builder.with_limit(limit)
-        results = query_builder.do()
+        # Execute the hybrid search
+        if do_rag:
+            # For RAG, use the generate method
+            single_prompt = ("Explain this XKCD comic in exactly two sentences: {title}. "
+                             f"Then explain in one more sentence how it relates to: {query}. "
+                             "Make it funny / light-hearted. "
+                             "Here is a long description to use as context: {explanation}.")
 
+            response = collection.generate.hybrid(
+                query=query,
+                alpha=alpha,
+                limit=limit,
+                filters=where_filter,
+                return_properties=["comic_id", "title", "image_url", "explanation", "transcript"],
+                single_prompt=single_prompt
+            )
+        else:
+            # Regular hybrid search without generation
+            response = collection.query.hybrid(
+                query=query,
+                alpha=alpha,
+                limit=limit,
+                filters=where_filter,
+                return_properties=["comic_id", "title", "image_url", "explanation", "transcript"]
+            )
 
-        # Extract comics from result
-        comics = results.get("data", {}).get("Get", {}).get("XKCDComic", [])
+        # Convert response objects to dictionaries for backward compatibility
+        comics = []
+        for obj in response.objects:
+            comic = obj.properties.copy()
+
+            # Add generative response if available
+            if do_rag and obj.generated:
+                comic['_additional'] = {
+                    'generate': {
+                        'singleResult': obj.generated
+                    }
+                }
+
+            comics.append(comic)
+
         logger.info(f"Found {len(comics)} comics matching query")
-
         return comics
 
     except Exception as e:
@@ -95,7 +119,8 @@ def main():
     parser.add_argument('--do-rag', action="store_true", help='Whether or not to add a generative summary of the comic.')
     parser.add_argument('--limit', type=int, default=3, help='Limit number of search results (default: 3)')
     parser.add_argument('--alpha', type=float, default=0.5, help='alpha value to determine weight of semantics in hybrid search (note: 1 => fully semantic)')
-    parser.add_argument('--weaviate-url', type=str, default='http://localhost:8080', help='URL of Weaviate instance (default: http://localhost:8080)')
+    parser.add_argument('--weaviate-host', type=str, default='localhost', help='Host of Weaviate instance (default: localhost)')
+    parser.add_argument('--weaviate-port', type=int, default=8080, help='Port of Weaviate instance (default: 8080)')
     parser.add_argument('--timeout', type=int, default=30, help='Timeout for requests in seconds (default: 30)')
     args = parser.parse_args()
 
@@ -103,9 +128,11 @@ def main():
         parser.print_help()
         return
 
+    client = None
     try:
         client = XKCDWeaviateClient(
-            weaviate_url=args.weaviate_url,
+            weaviate_host=args.weaviate_host,
+            weaviate_port=args.weaviate_port,
             timeout=args.timeout
         )
 
@@ -118,10 +145,8 @@ def main():
                 print(f"\n{i}. Comic #{comic.get('comic_id', 'Unknown')}: {comic.get('title', 'Unknown Title')}")
                 explanation = None
                 if args.do_rag:
-                    generate_response = comic['_additional']['generate']
+                    generate_response = comic.get('_additional', {}).get('generate', {})
                     explanation = generate_response.get('singleResult', comic.get('explanation'))
-                    if generate_response.get('error'):  # can be None itself
-                        logger.error(generate_response['error'])
                 elif comic.get('explanation'):
                     explanation = comic['explanation'][:200] + "..." if len(comic['explanation']) > 200 else comic['explanation']
                 print(f"   Explanation: {explanation}")
@@ -131,7 +156,9 @@ def main():
     except Exception as e:
         logger.error(f"Error: {str(e)}")
         print(f"❌ Error: {str(e)}")
-        sys.exit(1)
+    finally:
+        if client:
+            client.close()
 
 
 if __name__ == '__main__':

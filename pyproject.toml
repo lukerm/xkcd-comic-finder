@@ -24,7 +24,7 @@ dependencies = [
     "boto3~=1.38.44",
     "python-dotenv~=0.21.0",
     "requests~=2.28.1",
-    "weaviate-client~=3.15.4",
+    "weaviate-client~=4.15.4",
 ]
 
 [project.optional-dependencies]
