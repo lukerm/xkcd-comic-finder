@@ -47,6 +47,7 @@ def main():
     parser.add_argument('--min-delay', type=float, default=1.0, help='Minimum delay between requests in seconds')
     parser.add_argument('--max-delay', type=float, default=3.0, help='Maximum delay between requests in seconds')
     parser.add_argument('--output-dir', type=str, default=os.path.expanduser('~/xkcd-comic-finder/data/comics'), help='Directory to save scraped data')
+    parser.add_argument('--backfill-images-only', action='store_true', help='Only backfill missing image URLs for existing comics')
 
     args = parser.parse_args()
 
@@ -57,17 +58,27 @@ def main():
 
     # Scrape comics based on command
     if args.command == 'range':
-        logger.info(f"Starting scraping from comic {args.start_id}, fetching {args.num_comics} comics")
-        comics = scraper.scrape_comics_by_range(args.start_id, args.num_comics)
+        if args.backfill_images_only:
+            logger.info(f"Starting to backfill image URLs from comic {args.start_id}, fetching {args.num_comics} comics")
+            backfilled_ids = scraper.backfill_comic_image_urls_by_range(args.start_id, args.num_comics)
+            logger.info(f"Successfully backfilled image URLs for {len(backfilled_ids)} comics")
+        else:
+            logger.info(f"Starting scraping from comic {args.start_id}, fetching {args.num_comics} comics")
+            comics = scraper.scrape_comics_by_range(args.start_id, args.num_comics)
+            logger.info(f"Successfully scraped {len(comics)} comics")
     elif args.command == 'ids':
-        logger.info(f"Scraping comics with IDs: {args.comic_ids}")
-        comics = scraper.scrape_comics(args.comic_ids)
+        if args.backfill_images_only:
+            logger.info(f"Backfilling image URLs for comics with IDs: {args.comic_ids}")
+            backfilled_ids = scraper.backfill_comic_image_urls(args.comic_ids)
+            logger.info(f"Successfully backfilled image URLs for {len(backfilled_ids)} comics")
+        else:
+            logger.info(f"Scraping comics with IDs: {args.comic_ids}")
+            comics = scraper.scrape_comics(args.comic_ids)
+            logger.info(f"Successfully scraped {len(comics)} comics")
     else:
         logger.error("No command specified. Use 'range' or 'ids'.")
         parser.print_help()
         return
-
-    logger.info(f"Successfully scraped {len(comics)} comics")
 
 
 if __name__ == '__main__':
