@@ -180,6 +180,120 @@ class XKCDScraper:
         filename = self.output_dir / f"comic_{comic_id}.json"
         return filename.exists()
 
+    def _is_comic_image_url_missing(self, comic_id: int) -> bool:
+        """
+        Check if a comic's image URL is missing from the stored JSON file.
+
+        Args:
+            comic_id: ID of the comic to check
+
+        Returns:
+            True if the comic exists but has a missing image URL, False otherwise
+        """
+        if not self.output_dir:
+            return False
+
+        filename = self.output_dir / f"comic_{comic_id}.json"
+        if not filename.exists():
+            raise ValueError(f"Comic {comic_id} not found in {self.output_dir}")
+
+        try:
+            with open(filename, 'r', encoding='utf-8') as f:
+                comic_data = json.load(f)
+
+            image_url = comic_data.get("image_url")
+            return not image_url or image_url.strip() == ""
+        except Exception as e:
+            logger.warning(f"Error checking image URL for comic {comic_id}: {str(e)}")
+            return False
+
+    def backfill_comic_image_urls(self, comic_ids: Union[List[int], range]) -> List[int]:
+        """
+        Backfill missing image URLs for specified comics.
+
+        Args:
+            comic_ids: List of comic IDs to check and backfill
+
+        Returns:
+            List of comic IDs that were successfully backfilled
+        """
+        backfilled_ids = []
+        total_comics = len(list(comic_ids))
+
+        for k, comic_id in enumerate(comic_ids):
+            if comic_id <= 0:
+                logger.warning(f"Skipping invalid comic ID: {comic_id}")
+                continue
+
+            if k > 0 and k % 100 == 0:
+                logger.info(f"Progress backfilling image URLs {k+1}/{total_comics}: {comic_id}")
+
+            if self._is_comic_scraped(comic_id) and not self._is_comic_image_url_missing(comic_id):
+                logger.debug(f"Comic {comic_id} already has image URL or doesn't exist")
+                continue
+
+            try:
+                # Load existing comic data
+                filename = self.output_dir / f"comic_{comic_id}.json"
+                with open(filename, 'r', encoding='utf-8') as f:
+                    comic_data = json.load(f)
+
+                # Scrape image URL from xkcd.com
+                xkcd_url = f"https://xkcd.com/{comic_id}/"
+                logger.info(f"Scraping image URL for comic {comic_id} from {xkcd_url}")
+                headers = {
+                    "User-Agent": USER_AGENT,
+                    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                    "Accept-Language": "en-US,en;q=0.5"
+                }
+
+                xkcd_response = requests.get(xkcd_url, headers=headers)
+                xkcd_response.raise_for_status()
+                xkcd_soup = BeautifulSoup(xkcd_response.text, 'html.parser')
+
+                # Extract image URL
+                image_url = self._extract_image_url(xkcd_soup)
+
+                if image_url:
+                    # Update the comic data with the new image URL
+                    comic_data["image_url"] = image_url
+
+                    # Save the updated comic data
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        json.dump(comic_data, f, indent=2, ensure_ascii=False)
+
+                    logger.info(f"Backfilled image URL for comic {comic_id}: {image_url}")
+                    backfilled_ids.append(comic_id)
+                else:
+                    logger.warning(f"Could not extract image URL for comic {comic_id}")
+
+            except Exception as e:
+                logger.error(f"Error backfilling image URL for comic {comic_id}: {str(e)}")
+
+            # Sleep with random delay to avoid overloading the server
+            delay = random.uniform(self.min_delay, self.max_delay)
+            logger.debug(f"Waiting {delay:.2f} seconds before next request")
+            time.sleep(delay)
+
+        logger.info(f"Successfully backfilled image URLs for {len(backfilled_ids)} comics")
+        return backfilled_ids
+
+
+    def backfill_comic_image_urls_by_range(self, start_id: int, num_comics: int = 10) -> List[Comic]:
+        """
+        Backfill missing image URLs by specifying a range.
+
+        Args:
+            start_id: ID to start scraping from
+            num_comics: Number of comics to backfill
+
+        Returns:
+            List of comic IDs that were successfully backfilled
+        """
+        comic_ids = [start_id - i for i in range(num_comics) if start_id - i > 0]
+        random.shuffle(comic_ids)  # Randomize the order of comic IDs
+        return self.backfill_comic_image_urls(comic_ids)
+
     def scrape_comics(self, comic_ids: Union[List[int], range]) -> List[Comic]:
         """
         Scrape multiple comics by their IDs.
